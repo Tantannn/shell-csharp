@@ -9,7 +9,9 @@ class Program
 
             // Wait for user input
             var command = Console.ReadLine();
-            if (command != null) break;
+            if (String.IsNullOrEmpty(command) || command == "exit") {
+                break;
+            };
             Console.WriteLine($"{command}: command not found");
         }
     }
