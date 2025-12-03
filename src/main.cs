@@ -1,64 +1,99 @@
-class Program
+using System.Diagnostics;
+
+public class Program
 {
-    static void Main()
+  private static List<string> _builtInCommands =
+    new List<string> { "exit", "echo", "type" };
+
+  private static string? BuiltinPath(string command, string[] dirs)
+  {
+    foreach (var dir in dirs.Where(Directory.Exists))
     {
-        string[] BUILTIN_CMDS = ["echo", "type", "exit"];
+      var potentialFile = Path.Combine(dir, command);
 
-        while (true)
+      if (File.Exists(potentialFile))
+      {
+        try
         {
-            Console.Write("$ ");
-            // Wait for user input
-            var inputStr = Console.ReadLine();
+          var mode = File.GetUnixFileMode(potentialFile);
 
-            if (inputStr == "exit 0")
-            {
-                Environment.Exit(0);
-            }
+          // Check if User, Group, or Other has Execute permission
+          bool isExecutable =
+            (mode & (UnixFileMode.UserExecute | UnixFileMode.GroupExecute |
+                     UnixFileMode.OtherExecute)) != 0;
 
-            var parts = inputStr.Split();
-            var cmd = parts[0];
-            var inputArgs = parts[1..];
-
-            switch (cmd)
-            {
-                case "echo":
-                    Console.WriteLine(String.Join(" ", inputArgs));
-                    break;
-                case "type":
-                    var inputArg = inputArgs[0];
-
-                    var isBuiltinCmd = BUILTIN_CMDS.Contains(inputArg);
-                    if (isBuiltinCmd)
-                    {
-                        Console.WriteLine($"{inputArg} is a shell builtin");
-                    }
-                    else
-                    {
-                        var pathsStr = Environment.GetEnvironmentVariable("PATH");
-                        var pathsArr = pathsStr.Split(":");
-                        bool isFound = false;
-                        foreach (var path in pathsArr)
-                        {
-                            var joinedPath = Path.Join(path, inputArg);
-                            if (File.Exists(joinedPath))
-                            {
-                                isFound = true;
-                                Console.WriteLine($"{inputArg} is {joinedPath}");
-                                break;
-                            }
-                        }
-
-                        if (!isFound)
-                        {
-                            Console.WriteLine($"{inputArg}: not found");
-                        }
-                    }
-
-                    break;
-                default:
-                    Console.WriteLine($"{inputStr}: command not found");
-                    break;
-            }
+          if (isExecutable)
+          {
+            return potentialFile;
+          }
         }
+        catch (Exception)
+        {
+          // If we can't read permissions (or on Windows), fallback to just
+          // returning existing files
+          return potentialFile;
+        }
+      }
     }
+
+    return null;
+  }
+
+  public static int Main()
+  {
+    string? path = Environment.GetEnvironmentVariable("PATH");
+    string[] dirs = new string[0];
+    if (path != null)
+    {
+      char sep = Path.PathSeparator; // ; on Windows, : on Linux/macOS
+      dirs = path.Split(sep, StringSplitOptions.RemoveEmptyEntries);
+    }
+
+    while (true)
+    {
+      Console.Write("$ ");
+      string command = Console.ReadLine();
+      string[] args = command.Split(" ");
+      if (args.Length >= 1)
+      {
+        if (args[0] == "exit")
+        {
+          if (args.Length == 2 && int.TryParse(args[1], out int code))
+          {
+            return code;
+          }
+
+          return 0;
+        }
+        else if (args[0] == "echo")
+        {
+          Console.WriteLine(command.Substring(5));
+        }
+        else if (args[0] == "type")
+        {
+          if (args.Length >= 2)
+          {
+            if (_builtInCommands.Contains(args[1]))
+              Console.WriteLine($"{args[1]} is a shell builtin");
+            else
+            {
+              var fullPath = BuiltinPath(args[1], dirs);
+              if (fullPath != null)
+                Console.WriteLine($"{args[1]} is {fullPath}");
+              else
+                Console.WriteLine($"{args[1]}: not found");
+            }
+          }
+        }
+        else
+        {
+          var fullPath = BuiltinPath(args[0], dirs);
+          if (fullPath != null)
+            Process.Start(args[0], args[1..]).WaitForExit();
+          else
+            Console.WriteLine($"{command}: command not found");
+        }
+      }
+    }
+  }
 }
