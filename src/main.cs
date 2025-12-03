@@ -1,127 +1,58 @@
-using System.Diagnostics;
-using System.Runtime.InteropServices;
+string[] BUILTIN_CMDS = ["echo", "type", "exit"];
 
-class Program
+while (true)
 {
-    // 1. Define a dictionary to map command names (strings) to Actions
-    static readonly Dictionary<string, Action<string[]>> commands = new();
+    Console.Write("$ ");
+    // Wait for user input
+    var inputStr = Console.ReadLine();
 
-    static void Main()
+    if (inputStr == "exit 0")
     {
-        // 2. Register your commands here
-        RegisterCommands();
-
-        while (true)
-        {
-            Console.Write("$ ");
-            var input = Console.ReadLine();
-
-            if (string.IsNullOrWhiteSpace(input)) continue;
-
-            // 3. Smart Parsing: Split by space but keep the rest of the arguments
-            var parts = input.Trim().Split(' ');
-            var commandName = parts[0];
-            var args = parts.Skip(1).ToArray(); // Everything after the command name
-
-            // 4. Handle "exit" separately to break the loop cleanly
-            if (commandName == "exit") break;
-
-            // 5. Execute command if it exists, otherwise print error
-            if (commands.TryGetValue(commandName, out var command))
-            {
-                command(args);
-            }
-            else
-            {
-                Console.WriteLine($"{commandName}: command not found");
-            }
-        }
+        Environment.Exit(0);
     }
 
-    static void RegisterCommands()
+    var parts = inputStr.Split();
+    var cmd = parts[0];
+    var inputArgs = parts[1..];
+
+    switch (cmd)
     {
-        commands.Add("echo", (args) =>
-        {
-            // Join arguments back together to print them
-            Console.WriteLine(string.Join(" ", args));
-        });
+        case "echo":
+            Console.WriteLine(String.Join(" ", inputArgs));
+            break;
+        case "type":
+            var inputArg = inputArgs[0];
 
-        commands.Add("type", (args) =>
-        {
-            if (args.Length == 0) return;
-
-            var targetCmd = args[0];
-
-            // Check if the command is in our dictionary or is a special keyword
-            if (commands.ContainsKey(targetCmd) || targetCmd == "exit")
+            var isBuiltinCmd = BUILTIN_CMDS.Contains(inputArg);
+            if (isBuiltinCmd)
             {
-                Console.WriteLine($"{targetCmd} is a shell builtin");
+                Console.WriteLine($"{inputArg} is a shell builtin");
             }
             else
             {
+                var pathsStr = Environment.GetEnvironmentVariable("PATH");
+                var pathsArr = pathsStr.Split(":");
                 bool isFound = false;
-
-                try
+                foreach (var path in pathsArr)
                 {
-                    // Use ProcessStartInfo to find the executable (most reliable)
-                    var startInfo = new ProcessStartInfo
+                    var joinedPath = Path.Join(path, inputArg);
+                    if (File.Exists(joinedPath))
                     {
-                        FileName = targetCmd,
-                        UseShellExecute = false,
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true,
-                        CreateNoWindow = true
-                    };
-
-                    // Try to find the full path
-                    var fullPath = Path.Combine(Environment.SystemDirectory, targetCmd);
-
-                    // Check common extensions on Windows
-                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                    {
-                        string[] winExtensions = [".exe", ".cmd", ".bat", ".com", ""];
-                        foreach (var ext in winExtensions)
-                        {
-                            var testPath = Path.Combine(Environment.SystemDirectory, targetCmd + ext);
-                            if (File.Exists(testPath))
-                            {
-                                isFound = true;
-                                Console.WriteLine($"{targetCmd} is {testPath}");
-                                break;
-                            }
-                        }
-                    }
-                    else // Unix/Linux/Mac
-                    {
-                        // Use which command simulation
-                        var paths = Environment.GetEnvironmentVariable("PATH")?.Split(':') ?? Array.Empty<string>();
-                        foreach (var path in paths)
-                        {
-                            if (string.IsNullOrEmpty(path)) continue;
-                            var testPath = Path.Combine(path, targetCmd);
-                            if (File.Exists(testPath) && (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ||
-                                                          RuntimeInformation.IsOSPlatform(OSPlatform.OSX)))
-                            {
-                                isFound = true;
-                                Console.WriteLine($"{targetCmd} is {testPath}");
-                                break;
-                            }
-                        }
-                    }
-
-                    if (!isFound)
-                    {
-                        Console.WriteLine($"{targetCmd}: not found");
+                        isFound = true;
+                        Console.WriteLine($"{inputArg} is {joinedPath}");
+                        break;
                     }
                 }
-                catch (Exception ex)
+
+                if (!isFound)
                 {
-                    Console.WriteLine($"Error finding {targetCmd}: {ex.Message}");
+                    Console.WriteLine($"{inputArg}: not found");
                 }
             }
-        });
 
-        // Example: easy to add a 'clear' command now
-        commands.Add("clear", (_) => Console.Clear());
+            break;
+        default:
+            Console.WriteLine($"{inputStr}: command not found");
+            break;
     }
 }
