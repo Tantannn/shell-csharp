@@ -4,7 +4,6 @@ class Program
     {
         while (true)
         {
-            // TODO: Uncomment the code below to pass the first stage
             Console.Write("$ ");
 
             // Wait for user input
@@ -12,7 +11,12 @@ class Program
             if (String.IsNullOrEmpty(command) || command == "exit") {
                 break;
             };
-            Console.WriteLine($"{command}: command not found");
+            var arg = command.Split(" ");
+            if (arg[0] == "echo")  {
+                Console.WriteLine($"{command.Substring(5)}");
+            } else {
+                Console.WriteLine($"{command}: command not found");
+            }
         }
     }
 }
