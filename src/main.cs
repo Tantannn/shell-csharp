@@ -1,3 +1,6 @@
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+
 class Program
 {
     // 1. Define a dictionary to map command names (strings) to Actions
@@ -49,7 +52,6 @@ class Program
 
             var targetCmd = args[0];
 
-
             // Check if the command is in our dictionary or is a special keyword
             if (commands.ContainsKey(targetCmd) || targetCmd == "exit")
             {
@@ -57,21 +59,64 @@ class Program
             }
             else
             {
-                var pathsStr = Environment.GetEnvironmentVariable("PATH");
-                var pathsArr = pathsStr.Split(":");
-                var isFound = false;
-                foreach (var path in pathsArr)
-                {
-                    var joinedPath = Path.Join(path, targetCmd);
-                    if (!File.Exists(joinedPath)) continue;
-                    isFound = true;
-                    Console.WriteLine($"{targetCmd} is {joinedPath}");
-                    break;
-                }
+                bool isFound = false;
 
-                if (!isFound)
+                try
                 {
-                    Console.WriteLine($"{targetCmd}: not found");
+                    // Use ProcessStartInfo to find the executable (most reliable)
+                    var startInfo = new ProcessStartInfo
+                    {
+                        FileName = targetCmd,
+                        UseShellExecute = false,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        CreateNoWindow = true
+                    };
+
+                    // Try to find the full path
+                    var fullPath = Path.Combine(Environment.SystemDirectory, targetCmd);
+
+                    // Check common extensions on Windows
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                    {
+                        string[] winExtensions = [".exe", ".cmd", ".bat", ".com", ""];
+                        foreach (var ext in winExtensions)
+                        {
+                            var testPath = Path.Combine(Environment.SystemDirectory, targetCmd + ext);
+                            if (File.Exists(testPath))
+                            {
+                                isFound = true;
+                                Console.WriteLine($"{targetCmd} is {testPath}");
+                                break;
+                            }
+                        }
+                    }
+                    else // Unix/Linux/Mac
+                    {
+                        // Use which command simulation
+                        var paths = Environment.GetEnvironmentVariable("PATH")?.Split(':') ?? Array.Empty<string>();
+                        foreach (var path in paths)
+                        {
+                            if (string.IsNullOrEmpty(path)) continue;
+                            var testPath = Path.Combine(path, targetCmd);
+                            if (File.Exists(testPath) && (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ||
+                                                          RuntimeInformation.IsOSPlatform(OSPlatform.OSX)))
+                            {
+                                isFound = true;
+                                Console.WriteLine($"{targetCmd} is {testPath}");
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!isFound)
+                    {
+                        Console.WriteLine($"{targetCmd}: not found");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error finding {targetCmd}: {ex.Message}");
                 }
             }
         });
