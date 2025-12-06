@@ -59,9 +59,10 @@ public class Shell
       else if (c == ' ' && !inSingleQuote)
       {
         if (!hasTokenStarted) continue;
+        hasTokenStarted = false;
+        // currentToken.Append(c);
         args.Add(currentToken.ToString());
         currentToken.Clear();
-        currentToken.Append(c);
       }
       else
       {
