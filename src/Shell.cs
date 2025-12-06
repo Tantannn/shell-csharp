@@ -1,4 +1,6 @@
 ﻿using System.Diagnostics;
+using System.Text;
+
 public class Shell
 
 {
@@ -32,12 +34,48 @@ public class Shell
       if (input == null) break;
       if (string.IsNullOrWhiteSpace(input)) continue;
 
-      var parts = input.Trim().Split(' ');
+      var parts = ParseString(input);
       var command = parts[0];
       var args = parts.Skip(1).ToArray();
 
       Execute(command, args);
     }
+  }
+
+  private List<string> ParseString(string input)
+  {
+    if (input == "") return [];
+    var inSingleQuote = false;
+    var hasTokenStarted = false;
+    var currentToken = new StringBuilder();
+    var args = new List<string>();
+    foreach (var c in input)
+    {
+      if (c == '\'')
+      {
+        inSingleQuote = !inSingleQuote;
+        hasTokenStarted = true;
+      }
+      else if (c == ' ' && !inSingleQuote)
+      {
+        if (!hasTokenStarted) continue;
+        args.Add(currentToken.ToString());
+        currentToken.Clear();
+        currentToken.Append(c);
+      }
+      else
+      {
+        hasTokenStarted = true;
+        currentToken.Append(c);
+      }
+    }
+
+    if (hasTokenStarted)
+    {
+      args.Add(currentToken.ToString());
+    }
+
+    return args;
   }
 
   private void Execute(string command, string[] args)
