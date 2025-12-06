@@ -60,7 +60,6 @@ public class Shell
       {
         if (!hasTokenStarted) continue;
         hasTokenStarted = false;
-        // currentToken.Append(c);
         args.Add(currentToken.ToString());
         currentToken.Clear();
       }
@@ -81,18 +80,16 @@ public class Shell
 
   private void Execute(string command, string[] args)
   {
-    // 1. Check Built-ins
     if (_builtIns.ContainsKey(command))
     {
       _builtIns[command](args);
       return;
     }
 
-    // 2. Check External Programs (PATH)
     var executablePath = _pathResolver.FindExecutable(command);
     if (executablePath != null)
     {
-      RunExternalProcess(executablePath, args);
+      RunExternalProcess(command, args);
     }
     else
     {
