@@ -48,29 +48,33 @@ public class Shell
     var inSingleQuote = false;
     var inDoubleQuote = false;
     var hasTokenStarted = false;
-    var isAfterSlash = false;
+    var isEscaped = false;
     var currentToken = new StringBuilder();
     var args = new List<string>();
     foreach (var c in input)
     {
-      if (c == '\\')
+      if (isEscaped)
       {
-        isAfterSlash = true;
+        if (inDoubleQuote && c != '"' && c != '\\' && c != '$' && c != '\n')
+        {
+          currentToken.Append('\\');
+        }
+
+        currentToken.Append(c);
+        isEscaped = false;
+        hasTokenStarted = true;
         continue;
       }
 
-      if (isAfterSlash)
+      if (c == '\\' && !inSingleQuote)
       {
-        isAfterSlash = false;
-        currentToken.Append(c);
+        isEscaped = true;
+        hasTokenStarted = true; 
         continue;
       }
 
       switch (c)
       {
-        // case '\\':
-        //   isAfterSlash = true;
-        //   break;
         case '"':
           inDoubleQuote = !inDoubleQuote;
           hasTokenStarted = true;
