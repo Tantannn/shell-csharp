@@ -76,14 +76,16 @@ public class Shell
 
       switch (c)
       {
-        case '"':
+        case '"' when !inSingleQuote:
           inDoubleQuote = !inDoubleQuote;
           hasTokenStarted = true;
           break;
+
         case '\'' when !inDoubleQuote:
           inSingleQuote = !inSingleQuote;
           hasTokenStarted = true;
           break;
+
         case ' ' when (!inSingleQuote && !inDoubleQuote):
         {
           if (!hasTokenStarted) continue;
