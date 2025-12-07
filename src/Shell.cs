@@ -62,18 +62,15 @@ public class Shell
           inSingleQuote = !inSingleQuote;
           hasTokenStarted = true;
           break;
-        case ' ' when (!inSingleQuote || !inDoubleQuote):
+        case ' ' when (!inSingleQuote && !inDoubleQuote):
         {
-          if (!hasTokenStarted)
-          {
-            if (inDoubleQuote) currentToken.Append(c);
-          }
-          else
-          {
-            hasTokenStarted = false;
-            args.Add(currentToken.ToString());
-            currentToken.Clear();
-          }
+          if (!hasTokenStarted) continue;
+          // {
+          //   if (inDoubleQuote) currentToken.Append(c);
+          // }
+          hasTokenStarted = false;
+          args.Add(currentToken.ToString());
+          currentToken.Clear();
 
           break;
         }
