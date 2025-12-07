@@ -67,7 +67,7 @@ public class Shell
         continue;
       }
 
-      if (c == '\\')
+      if (c == '\\' && !inSingleQuote)
       {
         isEscaped = true;
         hasTokenStarted = true;
