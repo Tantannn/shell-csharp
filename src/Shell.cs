@@ -46,27 +46,34 @@ public class Shell
   {
     if (input == "") return [];
     var inSingleQuote = false;
+    var inDoubleQuote = false;
     var hasTokenStarted = false;
     var currentToken = new StringBuilder();
     var args = new List<string>();
     foreach (var c in input)
     {
-      if (c == '\'')
+      switch (c)
       {
-        inSingleQuote = !inSingleQuote;
-        hasTokenStarted = true;
-      }
-      else if (c == ' ' && !inSingleQuote)
-      {
-        if (!hasTokenStarted) continue;
-        hasTokenStarted = false;
-        args.Add(currentToken.ToString());
-        currentToken.Clear();
-      }
-      else
-      {
-        hasTokenStarted = true;
-        currentToken.Append(c);
+        case '"':
+          inDoubleQuote = !inDoubleQuote;
+          hasTokenStarted = true;
+          break;
+        case '\'' when !inDoubleQuote:
+          inSingleQuote = !inSingleQuote;
+          hasTokenStarted = true;
+          break;
+        case ' ' when (!inSingleQuote || !inDoubleQuote):
+        {
+          if (!hasTokenStarted) continue;
+          hasTokenStarted = false;
+          args.Add(currentToken.ToString());
+          currentToken.Clear();
+          break;
+        }
+        default:
+          hasTokenStarted = true;
+          currentToken.Append(c);
+          break;
       }
     }
 
