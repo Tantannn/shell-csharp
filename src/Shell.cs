@@ -55,7 +55,8 @@ public class Shell
     {
       if (isEscaped)
       {
-        if (inDoubleQuote && c != '"' && c != '\\' && c != '$' && c != '\n')
+        if ((inDoubleQuote && c != '"' && c != '\\' && c != '$' && c != '\n')
+            || (inDoubleQuote && c == '"'))
         {
           currentToken.Append('\\');
         }
@@ -66,10 +67,10 @@ public class Shell
         continue;
       }
 
-      if (c == '\\' && !inSingleQuote)
+      if (c == '\\')
       {
         isEscaped = true;
-        hasTokenStarted = true; 
+        hasTokenStarted = true;
         continue;
       }
 
