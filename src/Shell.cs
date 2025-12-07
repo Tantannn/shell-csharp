@@ -64,11 +64,17 @@ public class Shell
           break;
         case ' ' when (!inSingleQuote || !inDoubleQuote):
         {
-          if (!hasTokenStarted) continue;
-          hasTokenStarted = false;
-          if (inDoubleQuote) currentToken.Append(c);
-          args.Add(currentToken.ToString());
-          currentToken.Clear();
+          if (!hasTokenStarted)
+          {
+            if (inDoubleQuote) currentToken.Append(c);
+          }
+          else
+          {
+            hasTokenStarted = false;
+            args.Add(currentToken.ToString());
+            currentToken.Clear();
+          }
+
           break;
         }
         default:
