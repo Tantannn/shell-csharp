@@ -66,6 +66,7 @@ public class Shell
         {
           if (!hasTokenStarted) continue;
           hasTokenStarted = false;
+          if (inDoubleQuote) currentToken.Append(c);
           args.Add(currentToken.ToString());
           currentToken.Clear();
           break;
