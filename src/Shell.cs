@@ -48,12 +48,29 @@ public class Shell
     var inSingleQuote = false;
     var inDoubleQuote = false;
     var hasTokenStarted = false;
+    var isAfterSlash = false;
     var currentToken = new StringBuilder();
     var args = new List<string>();
     foreach (var c in input)
     {
+      if (c == '\\')
+      {
+        isAfterSlash = true;
+        continue;
+      }
+
+      if (isAfterSlash)
+      {
+        isAfterSlash = false;
+        currentToken.Append(c);
+        continue;
+      }
+
       switch (c)
       {
+        // case '\\':
+        //   isAfterSlash = true;
+        //   break;
         case '"':
           inDoubleQuote = !inDoubleQuote;
           hasTokenStarted = true;
@@ -65,9 +82,6 @@ public class Shell
         case ' ' when (!inSingleQuote && !inDoubleQuote):
         {
           if (!hasTokenStarted) continue;
-          // {
-          //   if (inDoubleQuote) currentToken.Append(c);
-          // }
           hasTokenStarted = false;
           args.Add(currentToken.ToString());
           currentToken.Clear();
