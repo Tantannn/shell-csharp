@@ -56,7 +56,7 @@ public class Shell
       if (isEscaped)
       {
         if ((inDoubleQuote && c != '"' && c != '\\' && c != '$' && c != '\n')
-            || (inDoubleQuote && c == '"'))
+            || (inSingleQuote && c == '"'))
         {
           currentToken.Append('\\');
         }
