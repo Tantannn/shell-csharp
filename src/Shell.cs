@@ -2,7 +2,6 @@
 using System.Text;
 
 public class Shell
-
 {
   private readonly Dictionary<string, Action<string[]>> _builtIns;
   private readonly PathResolver _pathResolver;
@@ -27,12 +26,17 @@ public class Shell
 
   public void Run()
   {
+    
+    Console.WriteLine("Press TAB. If nothing happens, your IDE is stealing the key!");
+        var key = Console.ReadKey(intercept: true);
+        Console.WriteLine($"You pressed: {key.Key}");
     while (_isRunning)
     {
       Console.Write("$ ");
+      
 
       // FIX: ReadLine must be INSIDE the loop
-      var input = Console.ReadLine();
+      var input = ReadLine.Read();
 
       // Handle Ctrl+C or empty input
       if (input == null) break;
