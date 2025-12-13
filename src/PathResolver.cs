@@ -27,14 +27,12 @@ class PathResolver
       if (IsExecutable(fullPath)) return fullPath;
 
       // Strategy 2: Windows Extensions (cmd.exe, git.exe, etc.)
-      if (_isWindows)
+      if (!_isWindows) continue;
+      string[] extensions = { ".exe", ".bat", ".cmd", ".com" };
+      foreach (var ext in extensions)
       {
-        string[] extensions = { ".exe", ".bat", ".cmd", ".com" };
-        foreach (var ext in extensions)
-        {
-          var fullPathWithExt = fullPath + ext;
-          if (File.Exists(fullPathWithExt)) return fullPathWithExt;
-        }
+        var fullPathWithExt = fullPath + ext;
+        if (File.Exists(fullPathWithExt)) return fullPathWithExt;
       }
     }
 

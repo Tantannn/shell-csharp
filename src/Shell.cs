@@ -19,6 +19,10 @@ public class Shell
       { "echo", HandleEcho },
       { "type", HandleType }
     };
+
+    var allCommands = _builtIns.Keys.ToArray(); 
+    ReadLine.AutoCompletionHandler = new ShellAutoCompleter(allCommands.ToArray());
+    ReadLine.HistoryEnabled = true;
   }
 
   public void Run()
