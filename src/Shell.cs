@@ -26,10 +26,6 @@ public class Shell
 
   public void Run()
   {
-    
-    Console.WriteLine("Press TAB. If nothing happens, your IDE is stealing the key!");
-        var key = Console.ReadKey(intercept: true);
-        Console.WriteLine($"You pressed: {key.Key}");
     while (_isRunning)
     {
       Console.Write("$ ");
