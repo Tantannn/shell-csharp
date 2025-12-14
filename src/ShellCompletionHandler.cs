@@ -19,41 +19,48 @@ public class ShellAutoCompleter : IAutoCompleteHandler
 
   public string[] GetSuggestions(string text, int index)
   {
-    // "text" is now the whole line (e.g. "echo myfi")
     if (string.IsNullOrWhiteSpace(text)) return Array.Empty<string>();
 
     var parts = text.Split(' ');
-
-    // Logic: If there are no spaces, we are typing the Command.
-    // If there is at least one space, we are typing Arguments (Files).
     bool isFirstWord = !text.Contains(' ');
 
     if (isFirstWord)
     {
-      // --- COMMAND COMPLETION ---
-      return _commands
+      // 1. Get ALL matches first
+      var matches = _commands
         .Where(c => c.StartsWith(text, StringComparison.OrdinalIgnoreCase))
         .ToArray();
+
+      // 2. Logic: Add space ONLY if it's a unique match
+      if (matches.Length == 1)
+      {
+        return new[] { matches[0] + " " };
+      }
+
+      if (matches.Length > 1)
+      {
+        Console.WriteLine();
+        foreach (var m in matches)
+        {
+          Console.WriteLine(m + "\t");
+        }
+      }
+
+      return ["hellow sdawd"];
     }
     else
     {
       // --- FILE COMPLETION ---
-      // "echo myfi" -> we want to complete "myfi"
       string lastWord = parts.Last();
-
       var fileMatches = GetFileSuggestions(lastWord);
-
-      // 2. IMPORTANT: Reconstruct the line.
-      // Since we told ReadLine NOT to split (Separators is empty), 
-      // it will replace the ENTIRE line with whatever we return.
-      // We must stick the first part of the command back onto the suggestion.
-
-      // Example:
-      // Input: "echo myfi"
-      // Match: "myfile.txt"
-      // We must return: "echo myfile.txt"
-
       string prefix = text.Substring(0, text.Length - lastWord.Length);
+
+      // Same logic for files: only add space if it's a unique file match
+      // (Optional: usually shells add space for files too, unless it's a directory)
+      if (fileMatches.Length == 1)
+      {
+        return new[] { prefix + fileMatches[0] + " " };
+      }
 
       return fileMatches
         .Select(match => prefix + match)

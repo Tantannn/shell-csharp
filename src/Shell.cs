@@ -16,7 +16,8 @@ public class Shell
     {
       { "exit", HandleExit },
       { "echo", HandleEcho },
-      { "type", HandleType }
+      { "type", HandleType },
+      { "typo", HandleType }
     };
 
     var allCommands = _builtIns.Keys.ToArray(); 
