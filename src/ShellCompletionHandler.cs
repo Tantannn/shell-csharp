@@ -46,7 +46,9 @@ public class ShellAutoCompleter : IAutoCompleteHandler
         }
       }
 
-      return ["hellow sdawd"];
+      var x = parts[0];
+
+      return ["$" + x];
     }
     else
     {
