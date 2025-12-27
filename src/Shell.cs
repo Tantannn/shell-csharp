@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Text;
+using Commands.Helpers;
 
 public class Shell
 {
@@ -21,7 +22,7 @@ public class Shell
     };
 
     var allCommands = _builtIns.Keys.ToArray(); 
-    ReadLine.AutoCompletionHandler = new ShellAutoCompleter(allCommands.ToArray());
+    ReadLine.AutoCompletionHandler = new AutoCompletionHandler();
     ReadLine.HistoryEnabled = true;
   }
 
