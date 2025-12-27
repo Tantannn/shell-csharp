@@ -22,7 +22,7 @@ public class Shell
     };
 
     var allCommands = _builtIns.Keys.ToArray(); 
-    ReadLine.AutoCompletionHandler = new AutoCompletionHandler();
+    ReadLine.AutoCompletionHandler = new AutoCompletionHandler(allCommands);
     ReadLine.HistoryEnabled = true;
   }
 
