@@ -17,8 +17,8 @@ namespace Commands.Helpers {
 
     public string[] GetSuggestions(string text, int index)
     {
-      var foundCmd = _commands.Where(c => c.StartsWith(text));
-      var enumerable = foundCmd as string[] ?? foundCmd.ToArray();
+      var foundCmd = _commands.Where(c => c.StartsWith(text)).OrderBy(c => c);
+      var enumerable = foundCmd.ToArray();
       var matches = enumerable.Select(c => c.Substring(text.Length) + " ")
           .ToArray();
       _previousSearch = text;
