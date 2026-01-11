@@ -15,7 +15,6 @@ public class Shell
     _builtIns = new Dictionary<string, Action<string[]>>
     {
       { "exit", HandleExit },
-      { "eche", HandleExit },
       { "echo", HandleEcho },
       { "type", HandleType }
     };
