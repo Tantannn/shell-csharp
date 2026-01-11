@@ -12,16 +12,20 @@ public class Shell
   {
     _pathResolver = new PathResolver();
 
-    // Register commands using a Dictionary (The Command Pattern)
     _builtIns = new Dictionary<string, Action<string[]>>
     {
       { "exit", HandleExit },
       { "echo", HandleEcho },
-      { "type", HandleType },
-      { "typo", HandleType }
+      { "type", HandleType }
     };
 
-    var allCommands = _builtIns.Keys.ToArray(); 
+    // Combine Built-ins + PATH executables
+    var builtInCommands = _builtIns.Keys;
+    var pathCommands = _pathResolver.GetPathExecutableNames();
+
+    // Use a HashSet to ensure uniqueness (e.g., if "echo" exists in PATH and built-ins)
+    var allCommands = builtInCommands.Union(pathCommands).ToArray();
+
     ReadLine.AutoCompletionHandler = new AutoCompletionHandler(allCommands);
     ReadLine.HistoryEnabled = true;
   }
@@ -31,7 +35,7 @@ public class Shell
     while (_isRunning)
     {
       Console.Write("$ ");
-      
+
 
       // FIX: ReadLine must be INSIDE the loop
       var input = ReadLine.Read();
@@ -180,7 +184,7 @@ public class Shell
       {
         FileName = path,
         UseShellExecute = false,
-        RedirectStandardOutput = false, // Let the child process write directly to console
+        RedirectStandardOutput = false,
         RedirectStandardError = false
       };
 

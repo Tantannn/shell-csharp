@@ -10,7 +10,7 @@ class PathResolver
   public PathResolver()
   {
     var pathEnv = Environment.GetEnvironmentVariable("PATH") ?? string.Empty;
-    var separator = Path.PathSeparator; // ';' on Windows, ':' on Linux
+    var separator = Path.PathSeparator;
 
     _paths = pathEnv.Split(separator, StringSplitOptions.RemoveEmptyEntries);
     _isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
@@ -56,5 +56,50 @@ class PathResolver
     {
       return false;
     }
+  }
+
+  public IEnumerable<string> GetPathExecutableNames()
+  {
+    var executableNames = new HashSet<string>();
+
+    foreach (var dir in _paths)
+    {
+      if (!Directory.Exists(dir)) continue;
+
+      try
+      {
+        // Get all files in the directory
+        var files = Directory.GetFiles(dir);
+        foreach (var file in files)
+        {
+          // We only want the name (e.g., "ls" instead of "/bin/ls")
+          var fileName = Path.GetFileName(file);
+
+          // On Windows, strip the extension for completion (optional but cleaner)
+          if (_isWindows)
+          {
+            var ext = Path.GetExtension(fileName).ToLower();
+            if (ext == ".exe" || ext == ".bat" || ext == ".cmd")
+            {
+              executableNames.Add(Path.GetFileNameWithoutExtension(fileName));
+            }
+          }
+          else
+          {
+            executableNames.Add(fileName);
+          }
+        }
+      }
+      catch (UnauthorizedAccessException)
+      {
+        /* Skip directories we can't read */
+      }
+      catch (IOException)
+      {
+        /* Skip other IO errors */
+      }
+    }
+
+    return executableNames;
   }
 }
