@@ -32,7 +32,7 @@ namespace Commands.Helpers {
           return [];
         }
         Console.WriteLine();
-        Console.WriteLine(string.Join(' ', enumerable));
+        Console.WriteLine(string.Join("  ", enumerable));
         Console.Write("$ " + text);
         return [];
       }
