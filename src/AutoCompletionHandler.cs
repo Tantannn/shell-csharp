@@ -6,22 +6,37 @@ namespace Commands.Helpers {
   public class AutoCompletionHandler : IAutoCompleteHandler {
     public char[] Separators { get; set; } = "abcdefghijklmnopqrstuvwxyz".ToArray();
 
-    private string[] _commands = ["echo", "exit"];
+    private readonly string[] _commands;
+    public int _tabCount = 0;
+    public string _previousSearch = "";
 
     public AutoCompletionHandler(string[] commands)
     {
       _commands = commands;
     }
 
-    public string[] GetSuggestions(string text, int index) {
-      var matches =  _commands.Where(c => c.StartsWith(text))
-          .Select(c => c.Substring(text.Length) + " ")
+    public string[] GetSuggestions(string text, int index)
+    {
+      var foundCmd = _commands.Where(c => c.StartsWith(text));
+      var enumerable = foundCmd as string[] ?? foundCmd.ToArray();
+      var matches = enumerable.Select(c => c.Substring(text.Length) + " ")
           .ToArray();
-      if (matches.Length == 0)
+      _previousSearch = text;
+
+      if (matches.Length != 1)
       {
-        Console.Write('\a');
+        if (_tabCount == 0)
+        {
+          _tabCount++;
+          Console.Write('\a');
+          return [];
+        }
+        Console.WriteLine();
+        Console.WriteLine(string.Join(' ', enumerable));
+        Console.Write("$ " + text);
         return [];
       }
+      _tabCount = 0;
       return matches;
     }
   }
