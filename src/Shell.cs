@@ -8,6 +8,7 @@ public class Shell
   private readonly PathResolver _pathResolver;
   private bool _isRunning = true;
 
+  
   public Shell()
   {
     _pathResolver = new PathResolver();
