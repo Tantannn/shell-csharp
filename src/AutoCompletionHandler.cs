@@ -1,96 +1,99 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+﻿using System ;
+using System.Collections.Generic ;
+using System.IO ;
+using System.Linq ;
 
 namespace Commands.Helpers
 {
   public class AutoCompletionHandler : IAutoCompleteHandler
   {
-    public char[] Separators { get; set; } = "abcdefghijklmnopqrstuvwxyz".ToArray();
+    // 1. CRITICAL FIX: Do NOT include letters here. 
+    // Only use characters that actually split words (Space, Slash, Backslash).
+    public char[] Separators { get ; set ; } = [' ', '/', '\\'] ;
 
-    private readonly string[] _commands;
-    public int _tabCount = 0;
+    private readonly string[] _commands ;
+    private string _lastText = string.Empty ;
+    private int _tabCount = 0 ;
 
-    public AutoCompletionHandler(string[] commands)
+    public AutoCompletionHandler( string[] commands )
     {
-      _commands = commands;
-    }
-    private string GetSharedPrefix(string[] matches)
-    {
-        if (matches.Length == 0) return string.Empty;
-        
-        string prefix = matches[0];
-        for (int i = 1; i < matches.Length; i++)
-        {
-            int j = 0;
-            while (j < prefix.Length && j < matches[i].Length && prefix[j] == matches[i][j])
-            {
-                j++;
-            }
-            prefix = prefix.Substring(0, j);
-            if (prefix == string.Empty) break;
-        }
-        return prefix;
+      _commands = commands ;
     }
 
-    public string[] GetSuggestions(string text, int index)
+    public string[] GetSuggestions( string text, int index )
     {
-        // 1. Get matches
-        var enumerable = _commands.Where(c => c.StartsWith(text)).OrderBy(c => c).ToArray();
+      // 2. State Sync: If user typed something new (or deleted), reset state.
+      if ( text != _lastText ) {
+        _tabCount = 0 ;
+        _lastText = text ;
+      }
 
-        // No matches -> Ring bell
-        if (enumerable.Length == 0)
-        {
-            Console.Write('\a');
-            return [];
+      var matches = _commands.Where( c => c.StartsWith( text ) ).OrderBy( c => c ).ToArray() ;
+
+      // Case A: No Matches -> Bell
+      if ( matches.Length == 0 ) {
+        _tabCount = 0 ; // Reset so we don't get stuck in a weird state
+        Console.Write( '\a' ) ;
+        return [] ;
+      }
+
+      // Case B: Exact Single Match -> Return Full String + Space
+      if ( matches.Length == 1 ) {
+        _tabCount = 0 ;
+        // Return the FULL word. ReadLine replaces 'text' with this.
+        return [matches[ 0 ] + " "] ;
+      }
+
+      // Case C: Multiple Matches -> Find Longest Common Prefix
+      string commonPrefix = GetCommonPrefix( matches ) ;
+
+      // If the shared prefix is longer than what we have...
+      if ( commonPrefix.Length > text.Length ) {
+        // 3. LOGIC FIX: 
+        // We are about to update the text. We must set _tabCount to 1.
+        // This tricks the shell into thinking "We just finished the 1st Tab action".
+        // So if the user hits Tab again, it proceeds to the "List" action.
+        _tabCount = 1 ;
+
+        // Manually update _lastText so the next call doesn't reset _tabCount
+        _lastText = commonPrefix ;
+
+        // Return the FULL prefix. The library replaces the current text with this.
+        return [commonPrefix] ;
+      }
+
+      // Case D: No Growth Possible -> Handle Bell vs List
+      if ( _tabCount == 0 ) {
+        // First Tab (and we can't grow): Ring Bell
+        _tabCount++ ;
+        Console.Write( '\a' ) ;
+        return [] ;
+      }
+
+      // Second Tab: Show List
+      Console.WriteLine() ;
+      Console.WriteLine( string.Join( "  ", matches ) ) ;
+      Console.Write( "$ " + text ) ; // Restore Prompt
+
+      _tabCount = 0 ; // Reset
+      return [] ;
+    }
+
+    private string GetCommonPrefix( string[] matches )
+    {
+      if ( matches.Length == 0 ) return "" ;
+      string prefix = matches[ 0 ] ;
+
+      foreach ( var s in matches.Skip( 1 ) ) {
+        int i = 0 ;
+        while ( i < prefix.Length && i < s.Length && prefix[ i ] == s[ i ] ) {
+          i++ ;
         }
 
-        // 2. Exactly one match -> Return it with a space
-        if (enumerable.Length == 1)
-        {
-            _tabCount = 0;
-            return [enumerable[0].Substring(text.Length) + " "];
-        }
+        prefix = prefix.Substring( 0, i ) ;
+      }
 
-        // 3. Multiple matches
-        if (_tabCount == 0)
-        {
-            // Find the shared part among all matches
-            // Start with the first match (without a space)
-            var firstMatch = enumerable[0].Substring(text.Length);
-            var commonSubString = firstMatch;
-
-            foreach (var fullCmd in enumerable.Skip(1))
-            {
-                var matchPart = fullCmd.Substring(text.Length);
-                var i = 0;
-                while (i < commonSubString.Length && i < matchPart.Length && commonSubString[i] == matchPart[i])
-                {
-                    i++;
-                }
-                commonSubString = commonSubString.Substring(0, i);
-            }
-
-            // If there's a common prefix we can fill in, return it to the library!
-            if (commonSubString.Length > 0)
-            {
-                _tabCount = 0; 
-                return [commonSubString]; // The library will handle the printing
-            }
-
-            // Nothing common to fill? Just ring the bell
-            _tabCount++;
-            Console.Write('\a');
-            return [];
-        }
-
-        // 4. Second Tab -> Show all options
-        Console.WriteLine();
-        Console.WriteLine(string.Join("  ", enumerable)); // Use 2 spaces per requirements
-        Console.Write("$ " + text);
-        _tabCount = 0;
-        return [];
+      return prefix ;
     }
   }
 }
